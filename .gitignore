@@ -1,0 +1,11 @@
+.venv/
+__pycache__/
+*.pyc
+*.mid
+*.midi
+*.musicxml
+*.mxl
+*.mp3
+*.wav
+*.flac
+*.m4a
