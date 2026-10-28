@@ -1,7 +1,7 @@
-# Add piano-specialized detection, sheet-music import and accuracy measurement
+# Fix imported MIDI score export and expose score-recognition timing errors
 
-Users can now select Transkun V2 for piano note detection and import sheet music directly. MusicXML/MXL preserves supported notation instead of passing through audio inference; PDFs/images use local Audiveris, with an explicit play-once option for incomplete repeat markings. MIDI import, review, editing and validated exports share the existing result workflow.
+A user-supplied MIDI failed MusicXML export because the importer treated precise MIDI timing as already engraved notation, bypassing score quantization. MIDI performance timing is now retained while notation is reconstructed using the selected quantization; native MusicXML keeps its supported notation.
 
-The optional Windows model installer handles Transkun's training-only ncls dependency through a metadata-only compatibility wheel; source and checkpoint bytes remain unchanged. A separate script installs official Audiveris. Thorough Demucs settings expose a slower ensemble option, while reference MIDI comparisons measure actual note precision/recall/F1 without automatic alignment or tuning.
+The same test set revealed missing tempo and overfull measures in PDF recognition. Imports now warn about those cases and support an explicit starting-tempo override. Reference-note comparisons flag timing discrepancies, and a local benchmark CLI records reproducible diagnostics without claiming aligned ground truth.
 
-Validation: 36 tests; real Transkun inference on 20 seconds of submitted audio; real Audiveris PDF recognition (277 notes, two parts); Chromium PDF-to-MIDI/MXL downloads and audio workflow regression. Windows/CUDA, Artie, image OMR and accuracy against real ground truth remain unverified. Existing bleed is not claimed solved: stronger separation candidates are documented, with gated-weight/resource limitations. See docs/TEST_REPORT.md.
+Validation: 40 tests, successful export/reopening of the user's 1,003-note MIDI, full-recording Basic Pitch/Transkun inference, and eight-page Audiveris recognition/export. Timing/instrument scope differs between the supplied recording and reference, so raw F1 is not claimed as model accuracy. See docs/COLD_BENCHMARK.md. User music/score files are excluded from Git.

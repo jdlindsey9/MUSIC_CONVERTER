@@ -120,3 +120,49 @@ def test_transkun_ui_routes_to_piano_detector(monkeypatch):
     assert not app.exception
     assert calls==['auto']
     assert app.session_state.metadata['detector']=='Transkun V2 (piano)'
+
+
+def test_midi_import_keeps_performance_but_allows_score_quantization():
+    from music_converter.pipeline import midi_bytes
+    midi=pretty_midi.PrettyMIDI(initial_tempo=70)
+    inst=pretty_midi.Instrument(0)
+    inst.notes=[pretty_midi.Note(80,60,.0031,.4137),pretty_midi.Note(80,64,.4293,.8411)]
+    midi.instruments=[inst]
+    imported,score,recognized=import_score(midi_bytes(midi),'performance.mid')
+    assert score is None and not recognized
+    files=export_files(imported,quantize=True,score=score)
+    check=pretty_midi.PrettyMIDI(io.BytesIO(files['mid']))
+    for before,after in zip(imported.instruments[0].notes,check.instruments[0].notes):
+        assert before.start==pytest.approx(after.start,abs=.001)
+        assert before.end==pytest.approx(after.end,abs=.001)
+    assert files['mxl'].startswith(b'PK')
+
+
+def test_comparison_flags_timing_mismatch_without_hiding_metrics():
+    ref=pretty_midi.PrettyMIDI();inst=pretty_midi.Instrument(0)
+    inst.notes=[pretty_midi.Note(80,60,0,1)];ref.instruments=[inst]
+    late=copy.deepcopy(ref)
+    late.instruments[0].notes[0].start=3
+    late.instruments[0].notes[0].end=4
+    report=compare_notes(ref,late)
+    assert len(report['timing_warnings'])==2
+    assert report['onset_f1']==0
+    assert compare_notes(ref,ref)['timing_warnings']==[]
+
+
+def test_score_review_flags_missing_tempo_and_overfull_measure(tmp_path):
+    from music_converter.scores import score_review_warnings
+    score=score_fixture()
+    for mark in list(score.recurse().getElementsByClass(tempo.MetronomeMark)):
+        mark.activeSite.remove(mark)
+    score.parts[0].measure(1).append(note.Note('G4',quarterLength=1))
+    warnings=score_review_warnings(score)
+    assert any('No numeric tempo' in w for w in warnings)
+    assert any('measure 1' in w and 'expected 3' in w for w in warnings)
+
+
+def test_starting_tempo_override_preserves_written_note_lengths(tmp_path):
+    path=tmp_path/'score.musicxml';score_fixture().write('musicxml',fp=path)
+    midi,score,_=import_score(path.read_bytes(),path.name,starting_tempo=60)
+    assert midi.get_end_time()==pytest.approx(3,abs=.01)
+    assert [n.duration.quarterLength for n in score.recurse().notes]==[1,2]

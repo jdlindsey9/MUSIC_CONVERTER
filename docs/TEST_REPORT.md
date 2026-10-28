@@ -66,3 +66,7 @@ User recording, original MusicXML and generated musical files are not committed 
 - Thorough Demucs passes are an exposed compute/quality tradeoff; no actual quality improvement measured because the cloud still lacks access to its weight host. SAM Audio and piano-specific RoFormer models were researched, not executed or integrated.
 
 Use `tests/browser_score_smoke.py` with `APP_URL`, `AUDIVERIS_PATH`, and `SCORE_PDF` to repeat the optional end-to-end PDF test. External sample files, recognized scores, checkpoints and user recordings are not committed.
+
+# Cold regression set
+
+See [Cold benchmark](COLD_BENCHMARK.md) for full-song model tests, eight-page OMR findings, source-alignment limitations and fixes. 40 automated tests pass. The supplied MIDI revealed a real MusicXML export failure; MIDI import now respects score quantization while preserving performance timing. PDF recognition missed tempo and overfilled measures 27/28; imports now expose these risks and allow an explicit initial-tempo override. User-owned music and scores are not committed.

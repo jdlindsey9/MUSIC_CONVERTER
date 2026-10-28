@@ -12,7 +12,7 @@ import streamlit.components.v1 as components
 from music_converter.pipeline import decode_audio, transcribe, export_files, note_rows, edited_midi, midi_bytes, preview_wav, wav_bytes
 from music_converter.modes import PIANO, ARRANGEMENT, BASELINE, separate_piano, arrange_piano
 from music_converter.piano_model import transcribe_piano
-from music_converter.scores import import_score
+from music_converter.scores import import_score, score_review_warnings
 from music_converter.evaluation import compare_notes
 from music_converter.delivery import audio_html, download_html, save_results
 
@@ -22,7 +22,7 @@ st.caption("Your recording. Your notes. Processed locally.")
 
 
 def clear_results():
-    for key in ('result', 'original', 'files', 'preview', 'stem', 'metadata', 'saved_path', 'archive', 'score_error', 'save_error', 'imported_score'):
+    for key in ('result', 'original', 'files', 'preview', 'stem', 'metadata', 'saved_path', 'archive', 'score_error', 'save_error', 'imported_score', 'score_warnings'):
         st.session_state.pop(key, None)
     st.session_state.edit_version = st.session_state.get('edit_version', 0) + 1
 
@@ -60,6 +60,7 @@ with st.sidebar:
     device = st.selectbox('Model device', ['auto', 'cuda', 'cpu'])
     thorough = st.checkbox('Thorough piano separation (slower)', value=False, disabled=mode != PIANO or input_kind != 'Audio recording')
     play_once = st.checkbox('Play written measures once (ignore repeats in playback)', value=True) if input_kind != 'Audio recording' else True
+    starting_tempo = st.number_input('Starting tempo BPM (0 = use score)', min_value=0, max_value=300, value=0, help='Use the printed tempo if recognition misses it. This changes the initial tempo only; later tempo changes remain.') if input_kind != 'Audio recording' else 0
     audiveris_path = st.text_input('Audiveris executable path (PDF/images)', help='Leave blank for automatic detection. Install with INSTALL_SHEET_MUSIC_WINDOWS.bat.') if input_kind != 'Audio recording' else ''
     density = st.slider('Arrangement: maximum simultaneous notes', 2, 6, 4, disabled=mode != ARRANGEMENT)
     onset = st.slider('Onset threshold', 0.1, 0.9, 0.5, 0.05, disabled=engine != 'Basic Pitch' or input_kind != 'Audio recording')
@@ -80,7 +81,7 @@ else:
     st.info('Transcribe audio that already contains an isolated instrument. This option does not separate instruments.')
 file = st.file_uploader('Upload a recording' if input_kind == 'Audio recording' else 'Upload sheet music or MIDI', type=['mp3', 'wav', 'flac', 'm4a', 'ogg', 'aac', 'aiff', 'wma'] if input_kind == 'Audio recording' else ['pdf', 'musicxml', 'xml', 'mxl', 'mid', 'midi', 'png', 'jpg', 'jpeg', 'tif', 'tiff'])
 identity = hashlib.sha256(file.getvalue()).hexdigest() if file else None
-result_key = (identity, input_kind, play_once, mode, engine, thorough, density if mode == ARRANGEMENT else None)
+result_key = (identity, input_kind, play_once, starting_tempo, mode, engine, thorough, density if mode == ARRANGEMENT else None)
 if st.session_state.get('source_key') != result_key:
     clear_results()
     st.session_state.source_key = result_key
@@ -89,10 +90,11 @@ if file and input_kind != 'Audio recording':
         clear_results()
         try:
             with st.spinner('Reading score; PDF recognition can take several minutes…'):
-                detected, score, recognized = import_score(file.getvalue(), file.name, audiveris_path, play_once=play_once)
-                metadata = dict(mode='Sheet music import', source_sha256=identity, optical_recognition=recognized, play_written_measures_once=play_once)
+                detected, score, recognized = import_score(file.getvalue(), file.name, audiveris_path, play_once=play_once, starting_tempo=starting_tempo or None)
+                metadata = dict(mode='Sheet music import', source_sha256=identity, optical_recognition=recognized, play_written_measures_once=play_once, starting_tempo_override=starting_tempo or None)
                 publish(detected, midi_bytes(detected), metadata, score=score)
                 st.session_state.imported_score = score
+                st.session_state.score_warnings = score_review_warnings(score)
             if recognized:
                 st.warning('Optical recognition completed. Inspect the score for recognition errors before using it.')
         except Exception as exc:
@@ -131,6 +133,8 @@ if file and input_kind == 'Audio recording':
             progress.empty()
             st.error(f'Conversion failed: {exc}')
 if 'result' in st.session_state:
+    for warning in st.session_state.get('score_warnings', []):
+        st.warning(warning)
     midi = pretty_midi.PrettyMIDI(io.BytesIO(st.session_state.result))
     rows = note_rows(midi)
     if st.session_state.stem:
@@ -161,6 +165,7 @@ if 'result' in st.session_state:
             publish(updated, st.session_state.original, metadata, st.session_state.stem, score=score)
             if apply:
                 st.session_state.pop('imported_score', None)
+                st.session_state.pop('score_warnings', None)
             st.rerun()
         except Exception as exc:
             st.error(f'Changes were not applied: {exc}')
@@ -188,6 +193,8 @@ if 'result' in st.session_state:
             try:
                 reference = pretty_midi.PrettyMIDI(io.BytesIO(reference_file.getvalue()))
                 report = compare_notes(reference, midi)
+                for warning in report['timing_warnings']:
+                    st.warning(warning)
                 st.json(report)
                 st.download_button('Download accuracy report', json.dumps(report, indent=2), 'accuracy-report.json', 'application/json', on_click='ignore')
             except Exception as exc:
