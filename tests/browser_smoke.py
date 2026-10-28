@@ -15,7 +15,7 @@ with sync_playwright() as pw:
     page.goto(os.environ.get('APP_URL', 'http://127.0.0.1:8501'))
     page.get_by_role('combobox').first.click()
     page.get_by_text('Whole song → piano arrangement', exact=True).click()
-    page.locator('input[type=file]').set_input_files(dict(name='test.wav', mimeType='audio/wav', buffer=preview_wav(m)))
+    page.locator('input[type=file]').first.set_input_files(dict(name='test.wav', mimeType='audio/wav', buffer=preview_wav(m)))
     page.get_by_role('button', name='Transcribe recording').click()
     expect(page.get_by_role('button', name='Download .mxl', exact=True)).to_be_visible(timeout=180000)
     with page.expect_download() as download:
@@ -31,7 +31,7 @@ with sync_playwright() as pw:
         next(f for f in page.frames if f.locator('a[download]').count()).locator('a[download]').click()
     assert Path(direct.value.path()).read_bytes()[:4] == b'MThd'
     page.screenshot(path='/tmp/music-converter-browser.png', full_page=True)
-    page.locator('input[type=file]').set_input_files(dict(name='bad.wav', mimeType='audio/wav', buffer=b'broken'))
+    page.locator('input[type=file]').first.set_input_files(dict(name='bad.wav', mimeType='audio/wav', buffer=b'broken'))
     expect(page.get_by_role('button', name='Download .mxl', exact=True)).to_have_count(0)
     page.get_by_role('button', name='Transcribe recording').click()
     expect(page.get_by_text('Conversion failed: Audio could not be decoded.', exact=False)).to_be_visible()

@@ -6,7 +6,7 @@ if not exist ".venv\Scripts\python.exe" (
   pause
   exit /b 1
 )
-echo Install piano isolation. CUDA is recommended for your NVIDIA RTX 4070 Super.
+echo Install piano isolation and Transkun V2. CUDA is recommended for your NVIDIA RTX 4070 Super.
 choice /c GC /n /m "Press G for NVIDIA GPU or C for CPU: "
 if errorlevel 2 goto cpu
 .venv\Scripts\python.exe -m pip install torch==2.5.1 torchaudio==2.5.1 --index-url https://download.pytorch.org/whl/cu121
@@ -17,6 +17,8 @@ goto separator
 if errorlevel 1 goto failed
 :separator
 .venv\Scripts\python.exe -m pip install -r requirements-piano.txt
+if errorlevel 1 goto failed
+.venv\Scripts\python.exe scripts\install_transkun.py
 if errorlevel 1 goto failed
 .venv\Scripts\python.exe -m pip check
 if errorlevel 1 goto failed

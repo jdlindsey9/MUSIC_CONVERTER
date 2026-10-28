@@ -80,7 +80,7 @@ def midi_bytes(midi):
     return out.getvalue()
 
 
-def export_files(midi, quantize=True):
+def export_files(midi, quantize=True, score=None):
     """MIDI retains performance timing; music21 quantization affects only the score."""
     raw = midi_bytes(midi)
     reopened = pretty_midi.PrettyMIDI(io.BytesIO(raw))
@@ -92,7 +92,8 @@ def export_files(midi, quantize=True):
     with tempfile.TemporaryDirectory() as work:
         path = Path(work) / "performance.mid"
         path.write_bytes(raw)
-        score = converter.parse(str(path), quantizePost=quantize)
+        if score is None:
+            score = converter.parse(str(path), quantizePost=quantize)
         xml_path = Path(work) / "score.musicxml"
         mxl_path = Path(work) / "compressed.mxl"
         score.write("musicxml", fp=str(xml_path))

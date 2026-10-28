@@ -10,7 +10,7 @@ ARRANGEMENT = 'Whole song → piano arrangement'
 BASELINE = 'Already isolated instrument (baseline)'
 
 
-def separate_piano(audio, rate, device='auto'):
+def separate_piano(audio, rate, device='auto', thorough=False):
     """Demucs six-source model has an actual piano target; never substitute 'other'."""
     try:
         import torch
@@ -41,7 +41,7 @@ def separate_piano(audio, rate, device='auto'):
         raise ValueError('Audio is silent or too quiet for source separation.')
     with torch.inference_mode():
         sources = apply_model(model, ((wave-mean)/std)[None], device=device,
-                              shifts=1, split=True, overlap=0.25, progress=False)[0]
+                              shifts=5 if thorough else 1, split=True, overlap=0.5 if thorough else 0.25, progress=False)[0]
     piano = (sources[model.sources.index('piano')].cpu() * std + mean).T.numpy()
     if not np.isfinite(piano).all() or np.max(np.abs(piano)) < 1e-6:
         raise ValueError('The separator did not return audible piano. Try a different recording or an isolated piano stem.')

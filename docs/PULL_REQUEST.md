@@ -1,9 +1,7 @@
-# Add separate piano-isolation and generated-arrangement workflows
+# Add piano-specialized detection, sheet-music import and accuracy measurement
 
-The baseline collapsed a mixed recording into one MIDI instrument, and media/download links failed on the user's Windows setup. The app now offers experimental Demucs piano-stem extraction before transcription, a separate whole-song piano reduction with two hand tracks and limited polyphony, and the original isolated-instrument baseline.
+Users can now select Transkun V2 for piano note detection and import sheet music directly. MusicXML/MXL preserves supported notation instead of passing through audio inference; PDFs/images use local Audiveris, with an explicit play-once option for incomplete repeat markings. MIDI import, review, editing and validated exports share the existing result workflow.
 
-Results are saved locally as well as offered through download buttons, a direct MIDI link and embedded audio. MIDI stays available if score export fails. Streamlit is pinned to 1.50.0 after reproducing an ASGI response failure with 1.60.0. The optional Windows installer selects CPU or NVIDIA CUDA dependencies for separation.
+The optional Windows model installer handles Transkun's training-only ncls dependency through a metadata-only compatibility wheel; source and checkpoint bytes remain unchanged. A separate script installs official Audiveris. Thorough Demucs settings expose a slower ensemble option, while reference MIDI comparisons measure actual note precision/recall/F1 without automatic alignment or tuning.
 
-Validation: 22 automated tests; Chromium upload, real inference and MIDI/MXL downloads, embedded audio/direct download with media routes blocked; real transcription and export of the user's 297.665-second recording. Its peak overlap was reduced from 11 notes to 4 across two generated piano tracks. Counts are not an accuracy benchmark.
-
-Limitations: actual Demucs weights were blocked by cloud network policy, so piano-isolation inference is unverified. Its upstream piano stem has known bleed/artifact limitations. The arranger is a heuristic draft, not a learned model. Windows GPU and Artie tests remain outstanding. Uploaded and generated musical files are excluded from Git.
+Validation: 36 tests; real Transkun inference on 20 seconds of submitted audio; real Audiveris PDF recognition (277 notes, two parts); Chromium PDF-to-MIDI/MXL downloads and audio workflow regression. Windows/CUDA, Artie, image OMR and accuracy against real ground truth remain unverified. Existing bleed is not claimed solved: stronger separation candidates are documented, with gated-weight/resource limitations. See docs/TEST_REPORT.md.

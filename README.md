@@ -52,3 +52,25 @@ Browser tests require Playwright and Chromium. Run `PYTHONPATH=. python tests/br
 Regenerate platform locks with `uv pip compile requirements.txt --python-version 3.11 --python-platform linux -o requirements.lock.txt` (substitute `windows` and the Windows filename). The setuptools cap fixes resampy's use of `pkg_resources`.
 
 See [validation report](docs/TEST_REPORT.md) and [model assessment](docs/MODELS.md). Specialized piano transcription (Transkun), learned arrangement, robust instrument identification, tempo estimation and representative accuracy benchmarks remain future work.
+
+## Piano-specialized detection and sheet music
+
+Update the app files, then rerun **INSTALL_PIANO_WINDOWS.bat** (G for NVIDIA). In Audio recording mode, choose **Transkun V2 (piano)** under Note detector. Use it on an isolated piano recording or the experimental piano stem. Basic Pitch stays available for comparisons; whole-song arrangements still use Basic Pitch because Transkun is trained for piano. Transkun's packaged V2 model includes pedal/control detection, but their accuracy has not been measured here. It cannot remove bleed from the separator. The Basic Pitch threshold controls are disabled when Transkun is selected.
+
+**Thorough piano separation** uses five shifted Demucs passes and 50% overlap instead of one pass/25%. It costs more time and may reduce boundary/shift artifacts; it is not a new separator or a guarantee of less bleed. CPU/CUDA/auto applies to both separation and Transkun. A 20-second real-audio excerpt was processed on CPU; native Windows/CUDA performance still needs testing.
+
+Select **Sheet music / MIDI** to upload:
+
+- **MusicXML / MXL / XML:** preferred for written music. Imports notes and supported notation directly without audio inference. Supported tempo, meter and repeats are retained in score exports until you apply note edits; editing rebuilds notation from MIDI and can lose engraving detail.
+- **MIDI / MID:** imports performance notes directly.
+- **PDF / PNG / JPEG / TIFF:** uses local Audiveris optical music recognition. Run **INSTALL_SHEET_MUSIC_WINDOWS.bat** once and complete the official Audiveris installer. Enter the path to `Audiveris.exe` if automatic detection fails. This installer downloads official Audiveris 5.11.0 with its Java runtime. Internet is required for installation; recognition is local.
+
+Click **Import score**, review/play the result and export. Optical recognition is imperfect: check accidentals, voices, rhythm and missing notes. **Play written measures once** is enabled by default; this ignores repeats in MIDI playback but preserves repeat symbols in MusicXML. Disable it for complete scores with valid repeat structure. Incomplete excerpts may not support expanded-repeat playback. Scores producing over 20 minutes of playback are rejected; split long scores into sections. The application supports one combined exported score per PDF; multi-movement outputs must be reviewed/exported in Audiveris first.
+
+The Transkun Windows installer creates version `2.0.1+musicconverter.1` from the official 2.0.1 wheel. It changes only package metadata: `ncls`, used by training-dataset indexing, becomes an optional `training` extra because it has no Windows wheel. Source code, model weights and licenses remain unchanged. Inference was tested with `ncls` imports blocked. This package is intended for inference; training tools still need the extra dependency.
+
+## Measuring improvements
+
+After conversion, expand **Measure note accuracy against a reference MIDI**. Upload known-correct MIDI from the **same performance with matching start time**, then click Compare notes. The JSON reports precision, recall, onset F1 and onset-plus-offset F1 using mir_eval. Onsets allow 50 ms; offsets allow the larger of 50 ms or 20% of reference duration. No automatic alignment or tuning is applied. MIDI from a different performance or different sustain-pedal conventions is not a valid direct comparison.
+
+For the next benchmark, provide the mixed recording, its isolated piano stem from the same performance if available, and corresponding MIDI/MusicXML. A separately played piano cover is useful for musical review but not exact timing ground truth. Use several pieces, keeping some unused during tuning, to avoid overfitting one song. Audio waveform identity is not an appropriate target for synthesized MIDI with a different piano sound.
