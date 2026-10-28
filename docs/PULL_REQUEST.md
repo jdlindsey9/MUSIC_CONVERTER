@@ -1,7 +1,9 @@
-# Repair and validate the local transcription pipeline
+# Add separate piano-isolation and generated-arrangement workflows
 
-The prototype could show results from the wrong upload and silently omit MXL exports. This change decodes audio through bundled FFmpeg, runs Basic Pitch, validates MIDI and score exports, and clears stale results. It adds piano-roll review, synthesized playback, editable note tables and a separately downloadable original performance. MIDI timing is independent of optional score quantization.
+The baseline collapsed a mixed recording into one MIDI instrument, and media/download links failed on the user's Windows setup. The app now offers experimental Demucs piano-stem extraction before transcription, a separate whole-song piano reduction with two hand tracks and limited polyphony, and the original isolated-instrument baseline.
 
-The Windows launcher now stops on installation errors and uses Python 3.11 with a separately resolved Windows lock. A setuptools compatibility constraint fixes Basic Pitch's resampy import. Automated Linux/Windows checks and model assessment notes document remaining phases.
+Results are saved locally as well as offered through download buttons, a direct MIDI link and embedded audio. MIDI stays available if score export fails. Streamlit is pinned to 1.50.0 after reproducing an ASGI response failure with 1.60.0. The optional Windows installer selects CPU or NVIDIA CUDA dependencies for separation.
 
-Validation: 14 passing tests; real CPU inference on a four-note synthetic fixture; Chromium upload/inference/MXL download and corrupt-upload flow; Streamlit health check; dependency checks. Native Windows, GPU, Artie import and real piano accuracy remain unverified. Full-song separation and piano arrangements are future phases. See docs/TEST_REPORT.md.
+Validation: 22 automated tests; Chromium upload, real inference and MIDI/MXL downloads, embedded audio/direct download with media routes blocked; real transcription and export of the user's 297.665-second recording. Its peak overlap was reduced from 11 notes to 4 across two generated piano tracks. Counts are not an accuracy benchmark.
+
+Limitations: actual Demucs weights were blocked by cloud network policy, so piano-isolation inference is unverified. Its upstream piano stem has known bleed/artifact limitations. The arranger is a heuristic draft, not a learned model. Windows GPU and Artie tests remain outstanding. Uploaded and generated musical files are excluded from Git.

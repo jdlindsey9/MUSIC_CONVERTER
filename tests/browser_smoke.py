@@ -12,17 +12,28 @@ m.instruments.append(i)
 with sync_playwright() as pw:
     browser = pw.chromium.launch(executable_path=os.environ.get('CHROMIUM_PATH', '/usr/bin/chromium'), headless=True, args=['--no-sandbox'])
     page = browser.new_page()
-    page.goto('http://127.0.0.1:8501')
+    page.goto(os.environ.get('APP_URL', 'http://127.0.0.1:8501'))
+    page.get_by_role('combobox').first.click()
+    page.get_by_text('Whole song → piano arrangement', exact=True).click()
     page.locator('input[type=file]').set_input_files(dict(name='test.wav', mimeType='audio/wav', buffer=preview_wav(m)))
     page.get_by_role('button', name='Transcribe recording').click()
     expect(page.get_by_role('button', name='Download .mxl', exact=True)).to_be_visible(timeout=180000)
     with page.expect_download() as download:
         page.get_by_role('button', name='Download .mxl', exact=True).click()
     assert Path(download.value.path()).read_bytes()[:2] == b'PK'
+    with page.expect_download() as mid:
+        page.get_by_role('button', name='Download .mid', exact=True).click()
+    assert Path(mid.value.path()).read_bytes()[:4] == b'MThd'
+    page.route('**/media/**', lambda route: route.abort())
+    audio_frame = page.frames[1]
+    audio_frame.wait_for_function("document.querySelector('audio').duration > 0")
+    with page.expect_download() as direct:
+        next(f for f in page.frames if f.locator('a[download]').count()).locator('a[download]').click()
+    assert Path(direct.value.path()).read_bytes()[:4] == b'MThd'
     page.screenshot(path='/tmp/music-converter-browser.png', full_page=True)
     page.locator('input[type=file]').set_input_files(dict(name='bad.wav', mimeType='audio/wav', buffer=b'broken'))
     expect(page.get_by_role('button', name='Download .mxl', exact=True)).to_have_count(0)
     page.get_by_role('button', name='Transcribe recording').click()
     expect(page.get_by_text('Conversion failed: Audio could not be decoded.', exact=False)).to_be_visible()
     browser.close()
-print('Browser upload, real inference, MXL download, stale result clearing and corrupt upload: passed')
+print('Browser arrangement inference, MIDI/MXL downloads, inline playback/direct MIDI with media routes blocked, stale-result clearing and corrupt upload: passed')

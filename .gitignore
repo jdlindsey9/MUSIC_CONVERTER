@@ -10,3 +10,4 @@ __pycache__/
 *.flac
 *.m4a
 .pytest_cache/
+outputs/

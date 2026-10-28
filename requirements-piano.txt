@@ -1,0 +1,4 @@
+# Optional six-source separator. Install torch/torchaudio first via the Windows installer.
+demucs==4.0.1
+torch==2.5.1
+torchaudio==2.5.1

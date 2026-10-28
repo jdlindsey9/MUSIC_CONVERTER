@@ -101,6 +101,7 @@ def test_upload_workflow(monkeypatch):
     import music_converter.pipeline as pipeline
     monkeypatch.setattr(pipeline, 'transcribe', lambda *a, **k: fixture_midi())
     app = AppTest.from_file('app.py').run(timeout=30)
+    app.selectbox[0].select('Already isolated instrument (baseline)').run()
     app.button[0].click().run(timeout=30)
     assert not app.exception
     assert 'result' in app.session_state

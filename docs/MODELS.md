@@ -20,3 +20,11 @@ Phase 3: evaluate YourMT3+ and source separation with instrument-labelled ground
 Phase 4: implement a clearly labelled generated piano arrangement with hand assignment, playable ranges and melody/bass prioritization. Extend the current editor with graphical editing and synchronized A/B playback.
 
 Phase 5: validate Windows and Artie imports with user recordings; benchmark and tune without claiming guaranteed transcription accuracy.
+
+## Follow-up implementation
+
+The two piano workflows now exist as experimental isolation and heuristic arrangement. The Demucs upstream README was inspected directly: https://github.com/facebookresearch/demucs (six-source model section). It explicitly says the piano stem has substantial bleed/artifacts. Therefore it is labelled experimental and its isolated audio is exposed for listening before trusting the transcription. It is not described as the best available piano separator.
+
+PyTorch/torchaudio 2.5.1 and Demucs 4.0.1 are an optional dependency group, with NVIDIA CUDA 12.1 and CPU wheel choices. No measured VRAM or Windows GPU speed is available. The model weight host was blocked in the cloud, so actual separation quality is not claimed. A newer piano-specific separator and Transkun evaluation remain the next accuracy tasks.
+
+The generated arrangement reduces Basic Pitch's output from the full mix. It uses no invented instrument labels, and its hand labels describe generated piano roles. It is not equivalent to reconstructing all source instrument tracks or identifying true melody/chord structure.

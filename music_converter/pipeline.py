@@ -16,7 +16,7 @@ MAX_SECONDS = 1200
 MAX_BYTES = 100 * 1024 * 1024
 
 
-def decode_audio(data: bytes) -> tuple[np.ndarray, int]:
+def decode_audio(data: bytes, rate=22050, channels=1) -> tuple[np.ndarray, int]:
     """Decode by content, never use the client's filename as a filesystem path."""
     if not data or len(data) > MAX_BYTES:
         raise ValueError("Choose a nonempty audio file smaller than 100 MB.")
@@ -25,8 +25,8 @@ def decode_audio(data: bytes) -> tuple[np.ndarray, int]:
         source.write_bytes(data)
         result = subprocess.run(
             [imageio_ffmpeg.get_ffmpeg_exe(), "-nostdin", "-v", "error", "-y",
-             "-i", str(source), "-t", str(MAX_SECONDS + 1), "-vn", "-ac", "1",
-             "-ar", "22050", "-c:a", "pcm_f32le", str(output)],
+             "-i", str(source), "-t", str(MAX_SECONDS + 1), "-vn", "-ac", str(channels),
+             "-ar", str(rate), "-c:a", "pcm_f32le", str(output)],
             capture_output=True, timeout=180,
         )
         if result.returncode:
@@ -115,4 +115,10 @@ def preview_wav(midi):
         audio = audio / peak * 0.9
     out = io.BytesIO()
     sf.write(out, audio, 22050, format="WAV", subtype="PCM_16")
+    return out.getvalue()
+
+
+def wav_bytes(audio, rate):
+    out = io.BytesIO()
+    sf.write(out, audio, rate, format="WAV", subtype="PCM_16")
     return out.getvalue()

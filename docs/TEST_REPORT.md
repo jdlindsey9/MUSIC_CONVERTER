@@ -30,3 +30,27 @@ Executed October 27, 2026 (America/Chicago), Linux x86_64, Python 3.11.17, CPU. 
 ## Windows handoff and next phase
 
 Install Python 3.11, run START_WINDOWS.bat, convert a short isolated piano recording, review notes, and import the downloaded MIDI and MXL into Artie. Note any rejected format or timing discrepancy. Next: benchmark Transkun V2 against this baseline with matched ground-truth and pedal conventions, then add CUDA support and multi-instrument work.
+
+# Piano modes and media update — October 27, 2026 (Chicago)
+
+User-provided MusicXML inspection found a single Electric Piano part and a fixed 120 BPM notation tempo. Its note entries include rests/tied notation; they are not separate instrument detections. The submitted MP3 decoded to 297.665 seconds. No claim of auditory listening or instrument identification is made from metadata alone.
+
+## Implemented
+
+- Experimental existing-piano workflow: stereo 44.1 kHz decode → Demucs htdemucs_6s piano stem → Basic Pitch → original stem audio plus MIDI/score. Explicit CPU/CUDA/auto selection and optional Windows GPU/CPU installer. No fallback from failed isolation to the unseparated mix.
+- Generated whole-song reduction: bass/upper melody candidates and strong harmony, 2–6 simultaneous notes, no duplicate pitches per hand, octave span per hand, two named acoustic-piano tracks. This is a deterministic heuristic, not a trained arrangement model; it can retain transcription errors or choose a harmonic as melody.
+- Inline audio, a direct MIDI data-link and automatic local output folders/ZIP archives. These avoid depending exclusively on Streamlit media endpoints. Downloads no longer trigger reruns. Score failures leave MIDI available. Changing source/mode/density clears stale results. Piano roll now uses one trace per track.
+- Pinned Streamlit 1.50.0 after reproducing an ASGI response error with 1.60.0 (`Expected ASGI message http.response.start, but got http.response.body`) during browser testing. This is evidence of a media-serving problem here, not proof of the precise failure on the user's PC. Base locks regenerated for both platforms.
+
+## Executed validation
+
+- Real CPU Basic Pitch inference on the entire submitted MP3: 2,275 notes, one track, peak overlap 11. Generated four-note reduction: 2,175 note events, two tracks, peak overlap 4. Inference/reduction/export took 39.25 seconds in this run. MIDI, MusicXML and MXL reopened. These are counts and resource observations, **not measured musical accuracy**; no ground-truth MIDI was supplied.
+- 22 automated tests pass with optional CPU Demucs installed. Includes arrangement density/hand-span invariants through overlapping note changes, duplicate suppression, drum exclusion, original preservation, two-track export, durable ZIP/file output, separator channel selection, failed-weight handling, UI mode routing/stale-result clearing, and score-failure MIDI retention. Separator tests use mocked model outputs; they do not establish actual separation quality.
+- Actual Chromium upload → arrangement inference → valid MXL and MIDI download. Inline audio metadata loads and direct MIDI download works with `/media/` routes explicitly blocked. Upload replacement and corrupt-audio failure tested. Streamlit 1.50.0.
+- Optional Demucs 4.0.1 + CPU torch/torchaudio 2.5.1 installed successfully; dependency check passed. Actual `get_model('htdemucs_6s')` attempted and blocked by cloud network policy at `dl.fbaipublicfiles.com` (403). No alternative host or proxy bypass attempted.
+
+## Remaining limitations
+
+Piano-isolation model inference and musical quality on the user's song remain **unverified** because weights could not be retrieved here. Windows optional installer, CUDA/RTX behavior, native browser media repair and Artie import still need verification on the user's computer. The supplied screenshots do establish that the earlier baseline installed and ran on Windows. The generated reduction is a first draft and is not validated as a musical arrangement by listening. This work does not add Transkun, trained multi-instrument transcription, pedal detection, beat tracking, or synchronized playback.
+
+User recording, original MusicXML and generated musical files are not committed to Git. Files generated for inspection are under the ignored `outputs` folder.

@@ -10,7 +10,7 @@ if not exist ".venv\Scripts\python.exe" goto missing
 if errorlevel 1 goto failed
 .venv\Scripts\python.exe -m pip check
 if errorlevel 1 goto failed
-.venv\Scripts\python.exe -m streamlit run app.py --server.address localhost --server.headless false --browser.gatherUsageStats false
+.venv\Scripts\python.exe -m streamlit run app.py --server.address localhost --server.headless false --browser.gatherUsageStats false --server.fileWatcherType none
 if errorlevel 1 goto failed
 exit /b 0
 :missing
