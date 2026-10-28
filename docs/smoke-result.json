@@ -1,0 +1,46 @@
+{
+  "fixture": "Four synthesized sine notes; not representative of piano recordings",
+  "seconds": 9.1,
+  "reference_notes": 4,
+  "detected_notes": 4,
+  "onset_precision": 1.0,
+  "onset_recall": 1.0,
+  "onset_f1": 1.0,
+  "detected": [
+    {
+      "track": 0,
+      "pitch": 60,
+      "start": 0.4992290249433107,
+      "end": 1.230657596371882,
+      "velocity": 78
+    },
+    {
+      "track": 0,
+      "pitch": 64,
+      "start": 1.497687074829932,
+      "end": 2.2187895691609976,
+      "velocity": 78
+    },
+    {
+      "track": 0,
+      "pitch": 67,
+      "start": 2.4974290249433104,
+      "end": 3.217247619047619,
+      "velocity": 76
+    },
+    {
+      "track": 0,
+      "pitch": 72,
+      "start": 3.4958870748299318,
+      "end": 4.216989569160997,
+      "velocity": 77
+    }
+  ],
+  "exports": [
+    "mid",
+    "midi",
+    "musicxml",
+    "xml",
+    "mxl"
+  ]
+}

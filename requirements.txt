@@ -4,3 +4,8 @@ music21>=9.1,<10
 pretty_midi>=0.2.10,<1
 numpy>=1.23,<2
 soundfile>=0.12,<1
+imageio-ffmpeg==0.6.0
+plotly>=5.24,<7
+pandas>=2.2,<3
+# resampy 0.4.2 imports pkg_resources, removed in newer setuptools.
+setuptools>=70,<81
